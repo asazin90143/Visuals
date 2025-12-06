@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm & PM Visualizer - Cyberpunk Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #050505;
+            color: #00ffff;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff; }
+            50% { text-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff, 0 0 80px #00ffff; }
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            padding: 15px 40px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 0 10px #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .tab:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .tab.active {
+            background: rgba(255, 0, 255, 0.3);
+            border-color: #ff00ff;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(57, 255, 20, 0.05);
+            border: 2px solid #39ff14;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        label {
+            font-size: 0.9em;
+            color: #39ff14;
+            text-shadow: 0 0 5px #39ff14;
+        }
+        
+        select, button, input[type="range"] {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #bf00ff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(191, 0, 255, 0.3);
+        }
+        
+        select:hover, button:hover {
+            border-color: #ff00ff;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+        
+        button {
+            background: rgba(191, 0, 255, 0.2);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        input[type="range"] {
+            padding: 0;
+            height: 8px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff00ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            border: 3px solid #00ffff;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4), inset 0 0 20px rgba(0, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .info-box {
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff00ff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+            min-height: 150px;
+        }
+        
+        .info-box h3 {
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            margin-bottom: 15px;
+        }
+        
+        .info-box p {
+            color: #00ffff;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+        
+        .speed-value {
+            display: inline-block;
+            color: #39ff14;
+            font-weight: bold;
+            text-shadow: 0 0 10px #39ff14;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ ALGORITHM VISUALIZER ⚡</h1>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('sorting')">SORTING ALGORITHMS</div>
+            <div class="tab" onclick="switchTab('pm')">PROJECT MANAGEMENT</div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>SELECT ALGORITHM:</label>
+                <select id="algorithmSelect" onchange="updateSelection()"></select>
+            </div>
+            <div class="control-group">
+                <label>SPEED: <span class="speed-value" id="speedValue">1x</span></label>
+                <input type="range" id="speedSlider" min="1" max="10" value="1" oninput="updateSpeed()">
+            </div>
+            <div class="control-group">
+                <label>SOUND: <span class="speed-value" id="soundStatus">ON</span></label>
+                <button onclick="toggleSound()" id="soundBtn">🔊 MUTE</button>
+            </div>
+            <div class="control-group">
+                <button onclick="launch()">🚀 LAUNCH</button>
+            </div>
+            <div class="control-group">
+                <button onclick="pauseResume()" id="pauseBtn">⏸ PAUSE</button>
+            </div>
+            <div class="control-group">
+                <button onclick="reset()">🔄 RESET</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container" id="canvasContainer"></div>
+        
+        <div class="info-box">
+            <h3 id="infoTitle">Select an algorithm to begin</h3>
+            <p id="infoText">Choose an algorithm from the dropdown menu and click LAUNCH to start the visualization.</p>
+        </div>
+    </div>
+
+    <script>
+        // Global state management
+        const state = {
+            mode: 'sorting',
+            currentAlgo: null,
+            isRunning: false,
+            isPaused: false,
+            speed: 1,
+            animationData: null,
+            soundEnabled: true
+        };
+
+        // Sound system
+        const sounds = {
+            oscillators: [],
+            initialized: false
+        };
+
+        function initSounds() {
+            if (sounds.initialized) return;
+            sounds.initialized = true;
+        }
+
+        function playCompareSound(value1, value2) {
+            if (!state.soundEnabled) return;
+            
+            const osc = new p5.Oscillator('sine');
+            const freq = map(value1, 0, canvasHeight, 200, 800);
+            osc.freq(freq);
+            osc.amp(0.1);
+            osc.start();
+            osc.stop(0.05);
+        }
+
+        function playSwapSound(value) {
+            if (!state.soundEnabled) return;
+            
+            const osc = new p5.Oscillator('square');
+            const freq = map(value, 0, canvasHeight, 300, 1000);
+            osc.freq(freq);
+            osc.amp(0.08);
+            osc.start();
+            osc.stop(0.08);
+        }
+
+        function playSortedSound() {
+            if (!state.soundEnabled) return;
+            
+            const osc = new p5.Oscillator('triangle');
+            osc.freq(600);
+            osc.amp(0.12);
+            osc.start();
+            osc.stop(0.15);
+        }
+
+        function playPhaseSound() {
+            if (!state.soundEnabled) return;
+            
+            const osc = new p5.Oscillator('sawtooth');
+            osc.freq(400);
+            osc.amp(0.1);
+            osc.start();
+            osc.stop(0.1);
+        }
+
+        function playLaunchSound() {
+            if (!state.soundEnabled) return;
+            
+            const osc = new p5.Oscillator('sawtooth');
+            osc.freq(200);
+            osc.amp(0.15);
+            osc.start();
+            
+            setTimeout(() => {
+                osc.freq(400, 0.1);
+            }, 50);
+            
+            setTimeout(() => {
+                osc.freq(800, 0.1);
+            }, 100);
+            
+            osc.stop(0.3);
+        }
+
+        function playCompleteSound() {
+            if (!state.soundEnabled) return;
+            
+            const notes = [523.25, 659.25, 783.99]; // C, E, G
+            notes.forEach((freq, i) => {
+                setTimeout(() => {
+                    const osc = new p5.Oscillator('sine');
+                    osc.freq(freq);
+                    osc.amp(0.15);
+                    osc.start();
+                    osc.stop(0.3);
+                }, i * 100);
+            });
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('soundStatus').textContent = state.soundEnabled ? 'ON' : 'OFF';
+            document.getElementById('soundBtn').textContent = state.soundEnabled ? '🔊 MUTE' : '🔇 UNMUTE';
+        }
+
+        // Data definitions
+        const sortingAlgos = {
+            'bubble': { name: 'Bubble Sort', desc: 'Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. Time: O(n²)' },
+            'selection': { name: 'Selection Sort', desc: 'Divides the input into sorted and unsorted regions, repeatedly selecting the smallest element from unsorted. Time: O(n²)' },
+            'insertion': { name: 'Insertion Sort', desc: 'Builds the final sorted array one item at a time, inserting each element into its proper position. Time: O(n²)' },
+            'merge': { name: 'Merge Sort', desc: 'Divide-and-conquer algorithm that divides the array into halves, sorts them, and merges them back. Time: O(n log n)' },
+            'quick': { name: 'Quick Sort', desc: 'Picks a pivot element and partitions the array around it, recursively sorting the sub-arrays. Time: O(n log n) avg' },
+            'heap': { name: 'Heap Sort', desc: 'Builds a max heap from the data, then repeatedly extracts the maximum element to create sorted array. Time: O(n log n)' },
+            'shell': { name: 'Shell Sort', desc: 'Generalization of insertion sort allowing exchange of far items. Uses gap sequences. Time: O(n log n) to O(n²)' },
+            'comb': { name: 'Comb Sort', desc: 'Improved bubble sort that eliminates turtles (small values at end) by using gaps. Time: O(n²/2^p)' },
+            'cycle': { name: 'Cycle Sort', desc: 'In-place, unstable sorting algorithm optimal for situations where memory writes are costly. Time: O(n²)' },
+            'gnome': { name: 'Gnome Sort', desc: 'Similar to insertion sort but moving element to proper place by series of swaps. Time: O(n²)' },
+            'cocktail': { name: 'Cocktail Shaker', desc: 'Bidirectional bubble sort that traverses the list in both directions alternately. Time: O(n²)' },
+            'counting': { name: 'Counting Sort', desc: 'Integer sorting algorithm using key frequencies. Works well for small range of integers. Time: O(n+k)' },
+            'radix': { name: 'Radix Sort', desc: 'Non-comparative sorting that sorts integers by processing digits from least to most significant. Time: O(d(n+k))' },
+            'bucket': { name: 'Bucket Sort', desc: 'Distributes elements into buckets, sorts buckets individually, then concatenates. Time: O(n+k)' },
+            'pigeonhole': { name: 'Pigeonhole Sort', desc: 'Suitable when range of key values is small. Creates pigeonholes for each value. Time: O(n+Range)' },
+            'bead': { name: 'Bead Sort', desc: 'Natural sorting algorithm inspired by beads on rods. Only works for positive integers. Time: O(n) or O(√n)' },
+            'tim': { name: 'Tim Sort', desc: 'Hybrid sorting derived from merge and insertion sort. Used in Python and Java. Time: O(n log n)' },
+            'intro': { name: 'Intro Sort', desc: 'Hybrid of quicksort, heapsort, and insertion sort. Switches algorithms based on recursion depth. Time: O(n log n)' }
+        };
+
+        const pmMethodologies = {
+            'waterfall': { name: 'Waterfall', desc: 'Sequential design process where progress flows downward through phases: Requirements → Design → Implementation → Testing → Maintenance. Each phase must complete before the next begins.' },
+            'agile': { name: 'Agile', desc: 'Iterative approach emphasizing flexibility, collaboration, and rapid delivery. Breaks projects into sprints with continuous feedback and adaptation.' },
+            'scrum': { name: 'Scrum', desc: 'Agile framework with fixed-length sprints (2-4 weeks), daily standups, sprint planning, reviews, and retrospectives. Roles: Product Owner, Scrum Master, Dev Team.' },
+            'kanban': { name: 'Kanban', desc: 'Visual workflow management using boards with columns (To Do, In Progress, Done). Limits work in progress (WIP) to optimize flow and identify bottlenecks.' },
+            'scrumban': { name: 'Scrumban', desc: 'Hybrid combining Scrum\'s structure with Kanban\'s flexibility. Uses sprints with WIP limits and continuous flow. Best for maintenance projects.' },
+            'xp': { name: 'Extreme Programming', desc: 'Agile methodology emphasizing technical excellence: pair programming, TDD, continuous integration, refactoring, and frequent releases.' },
+            'lean': { name: 'Lean', desc: 'Focuses on eliminating waste, amplifying learning, deciding late, delivering fast, empowering team, building quality in, and optimizing the whole.' },
+            'dsdm': { name: 'DSDM', desc: 'Dynamic Systems Development Method: Agile framework with focus on business value, active user involvement, iterative development, and MoSCoW prioritization.' },
+            'cpm': { name: 'CPM/CCPM', desc: 'Critical Path Method identifies longest sequence of dependent tasks. Critical Chain adds resource constraints and buffers for better scheduling.' },
+            'sixsigma': { name: 'Six Sigma', desc: 'Data-driven methodology for eliminating defects using DMAIC (Define, Measure, Analyze, Improve, Control). Targets 3.4 defects per million.' },
+            'leansixsigma': { name: 'Lean Six Sigma', desc: 'Combines Lean\'s waste elimination with Six Sigma\'s variation reduction. Faster delivery with higher quality and lower costs.' },
+            'prince2': { name: 'PRINCE2', desc: 'PRojects IN Controlled Environments: Process-based method with 7 principles, 7 themes, and 7 processes. Focus on business justification and defined roles.' },
+            'pmbok': { name: 'PMBOK', desc: 'Project Management Body of Knowledge: PMI standard covering 10 knowledge areas and 5 process groups (Initiating, Planning, Executing, Monitoring, Closing).' },
+            'cpmai': { name: 'CPMAI', desc: 'Cognitive Project Management for AI: Framework for AI/ML projects covering problem framing, data strategy, model development, and deployment.' },
+            'experimental': { name: 'Experimentation-Driven', desc: 'Scientific method applied to PM: Form hypothesis, design experiments, run tests, analyze results, iterate. Common in growth and product teams.' },
+            'humanloop': { name: 'Human-in-the-Loop', desc: 'Workflow where humans and AI collaborate: AI suggests, humans validate, corrections improve model. Essential for high-stakes decisions.' },
+            'aiautomation': { name: 'AI Task Automation', desc: 'Uses AI to automate repetitive PM tasks: status updates, risk analysis, schedule optimization, resource allocation, and report generation.' },
+            'predictive': { name: 'Predictive Analytics', desc: 'Leverages historical data and ML to forecast project outcomes, identify risks, estimate completion times, and optimize resource allocation.' },
+            'resourceopt': { name: 'Resource Optimization', desc: 'AI-driven approach to maximize resource utilization: skill matching, workload balancing, capacity planning, and cost optimization.' }
+        };
+
+        // Initialize
+        function init() {
+            populateDropdown();
+            updateSelection();
+        }
+
+        function switchTab(mode) {
+            state.mode = mode;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            reset();
+            populateDropdown();
+            updateSelection();
+        }
+
+        function populateDropdown() {
+            const select = document.getElementById('algorithmSelect');
+            select.innerHTML = '';
+            const data = state.mode === 'sorting' ? sortingAlgos : pmMethodologies;
+            Object.keys(data).forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = data[key].name;
+                select.appendChild(option);
+            });
+        }
+
+        function updateSelection() {
+            const select = document.getElementById('algorithmSelect');
+            state.currentAlgo = select.value;
+            const data = state.mode === 'sorting' ? sortingAlgos : pmMethodologies;
+            const info = data[state.currentAlgo];
+            document.getElementById('infoTitle').textContent = info.name;
+            document.getElementById('infoText').textContent = info.desc;
+        }
+
+        function updateSpeed() {
+            const slider = document.getElementById('speedSlider');
+            state.speed = parseInt(slider.value);
+            document.getElementById('speedValue').textContent = state.speed + 'x';
+        }
+
+        function launch() {
+            if (!state.currentAlgo) return;
+            state.isRunning = true;
+            state.isPaused = false;
+            document.getElementById('pauseBtn').textContent = '⏸ PAUSE';
+            initializeAnimation();
+        }
+
+        function pauseResume() {
+            if (!state.isRunning) return;
+            state.isPaused = !state.isPaused;
+            document.getElementById('pauseBtn').textContent = state.isPaused ? '▶ RESUME' : '⏸ PAUSE';
+        }
+
+        function reset() {
+            state.isRunning = false;
+            state.isPaused = false;
+            state.animationData = null;
+            document.getElementById('pauseBtn').textContent = '⏸ PAUSE';
+            if (window.resetAnimation) window.resetAnimation();
+        }
+
+        function initializeAnimation() {
+            if (state.mode === 'sorting') {
+                initSortingAnimation();
+            } else {
+                initPMAnimation();
+            }
+        }
+
+        // p5.js sketch
+        let canvas;
+        const canvasWidth = 1200;
+        const canvasHeight = 600;
+
+        function setup() {
+            canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent('canvasContainer');
+            frameRate(60);
+            textAlign(CENTER, CENTER);
+        }
+
+        function draw() {
+            background(5);
+            
+            if (!state.isRunning || state.isPaused || !state.animationData) {
+                drawIdleState();
+                return;
+            }
+
+            // Route to appropriate visualizer
+            if (state.mode === 'sorting') {
+                drawSortingVisualization();
+            } else {
+                drawPMVisualization();
+            }
+        }
+
+        function drawIdleState() {
+            push();
+            textSize(32);
+            fill(0, 255, 255, 150);
+            textFont('Orbitron');
+            text('Press LAUNCH to start visualization', width/2, height/2);
+            
+            // Animated border
+            noFill();
+            stroke(255, 0, 255, 100 + sin(frameCount * 0.05) * 100);
+            strokeWeight(3);
+            rect(50, 50, width-100, height-100, 20);
+            pop();
+        }
+
+        // SORTING VISUALIZATION SYSTEM
+        function initSortingAnimation() {
+            const arraySize = 100;
+            const arr = [];
+            for (let i = 0; i < arraySize; i++) {
+                arr.push({
+                    value: Math.floor(Math.random() * (canvasHeight - 100)) + 10,
+                    state: 'unsorted' // unsorted, comparing, swapping, sorted
+                });
+            }
+            
+            state.animationData = {
+                array: arr,
+                currentStep: 0,
+                algorithm: state.currentAlgo,
+                // Algorithm-specific data
+                i: 0,
+                j: 0,
+                sorted: false,
+                // For merge sort
+                segments: [],
+                mergeStack: [],
+                // For quick sort
+                stack: [],
+                pivotIndex: -1,
+                // For heap sort
+                heapSize: arraySize
+            };
+
+            // Initialize algorithm-specific data
+            switch(state.currentAlgo) {
+                case 'merge':
+                    initMergeSort();
+                    break;
+                case 'quick':
+                    initQuickSort();
+                    break;
+                case 'heap':
+                    initHeapSort();
+                    break;
+            }
+        }
+
+        function drawSortingVisualization() {
+            if (!state.animationData || state.animationData.sorted) {
+                if (state.animationData) {
+                    state.animationData.array.forEach(item => item.state = 'sorted');
+                }
+                return;
+            }
+
+            const data = state.animationData;
+            const barWidth = (width - 100) / data.array.length;
+            const maxHeight = height - 150;
+
+            // Draw bars
+            for (let i = 0; i < data.array.length; i++) {
+                const item = data.array[i];
+                const x = 50 + i * barWidth;
+                const barHeight = map(item.value, 0, maxHeight, 10, maxHeight);
+                
+                // Color based on state
+                switch(item.state) {
+                    case 'comparing':
+                        fill(255, 255, 255);
+                        break;
+                    case 'swapping':
+                        fill(255, 0, 100);
+                        break;
+                    case 'sorted':
+                        fill(57, 255, 20);
+                        break;
+                    case 'pivot':
+                        fill(255, 0, 255);
+                        break;
+                    default:
+                        fill(0, 255, 255);
+                }
+                
+                noStroke();
+                rect(x, height - 50 - barHeight, barWidth - 2, barHeight);
+            }
+
+            // Step through algorithm
+            for (let s = 0; s < state.speed; s++) {
+                if (state.animationData.sorted) break;
+                stepSortingAlgorithm();
+            }
+        }
+
+        function stepSortingAlgorithm() {
+            const algo = state.animationData.algorithm;
+            
+            switch(algo) {
+                case 'bubble':
+                    stepBubbleSort();
+                    break;
+                case 'insertion':
+                    stepInsertionSort();
+                    break;
+                case 'merge':
+                    stepMergeSort();
+                    break;
+                case 'quick':
+                    stepQuickSort();
+                    break;
+                case 'heap':
+                    stepHeapSort();
+                    break;
+                default:
+                    stepGenericSort();
+            }
+        }
+
+        // BUBBLE SORT
+        function stepBubbleSort() {
+            const data = state.animationData;
+            const arr = data.array;
+            
+            // Reset states
+            arr.forEach(item => {
+                if (item.state !== 'sorted') item.state = 'unsorted';
+            });
+
+            if (data.i >= arr.length - 1) {
+                data.sorted = true;
+                return;
+            }
+
+            if (data.j >= arr.length - data.i - 1) {
+                arr[arr.length - data.i - 1].state = 'sorted';
+                data.i++;
+                data.j = 0;
+                return;
+            }
+
+            // Compare
+            arr[data.j].state = 'comparing';
+            arr[data.j + 1].state = 'comparing';
+
+            if (arr[data.j].value > arr[data.j + 1].value) {
+                // Swap
+                arr[data.j].state = 'swapping';
+                arr[data.j + 1].state = 'swapping';
+                [arr[data.j], arr[data.j + 1]] = [arr[data.j + 1], arr[data.j]];
+            }
+
+            data.j++;
+        }
+
+        // INSERTION SORT
+        function stepInsertionSort() {
+            const data = state.animationData;
+            const arr = data.array;
+
+            if (data.i === 0) {
+                arr[0].state = 'sorted';
+                data.i = 1;
+                data.j = 0;
+            }
+
+            if (data.i >= arr.length) {
+                data.sorted = true;
+                return;
+            }
+
+            // Reset states
+            arr.forEach((item, idx) => {
+                if (idx <= data.i && item.state !== 'comparing' && item.state !== 'swapping') {
+                    item.state = 'sorted';
+                } else if (item.state !== 'comparing' && item.state !== 'swapping') {
+                    item.state = 'unsorted';
+                }
+            });
+
+            if (data.j === 0) {
+                data.j = data.i;
+            }
+
+            if (data.j > 0 && arr[data.j - 1].value > arr[data.j].value) {
+                arr[data.j].state = 'swapping';
+                arr[data.j - 1].state = 'swapping';
+                [arr[data.j], arr[data.j - 1]] = [arr[data.j - 1], arr[data.j]];
+                data.j--;
+            } else {
+                data.i++;
+                data.j = 0;
+            }
+        }
+
+        // MERGE SORT
+        function initMergeSort() {
+            const data = state.animationData;
+            data.mergeStack = [{left: 0, right: data.array.length - 1, phase: 'divide'}];
+            data.tempArray = [];
+        }
+
+        function stepMergeSort() {
+            const data = state.animationData;
+            
+            if (data.mergeStack.length === 0) {
+                data.sorted = true;
+                return;
+            }
+
+            const current = data.mergeStack[data.mergeStack.length - 1];
+            
+            if (current.phase === 'divide') {
+                if (current.left >= current.right) {
+                    data.mergeStack.pop();
+                    return;
+                }
+
+                const mid = Math.floor((current.left + current.right) / 2);
+                data.mergeStack.pop();
+                data.mergeStack.push({left: current.left, right: current.right, mid: mid, phase: 'merge'});
+                data.mergeStack.push({left: mid + 1, right: current.right, phase: 'divide'});
+                data.mergeStack.push({left: current.left, right: mid, phase: 'divide'});
+            } else if (current.phase === 'merge') {
+                mergeSortMerge(current.left, current.mid, current.right);
+                data.mergeStack.pop();
+            }
+        }
+
+        function mergeSortMerge(left, mid, right) {
+            const data = state.animationData;
+            const arr = data.array;
+            const temp = [];
+            
+            let i = left, j = mid + 1;
+            
+            while (i <= mid && j <= right) {
+                arr[i].state = 'comparing';
+                arr[j].state = 'comparing';
+                
+                if (arr[i].value <= arr[j].value) {
+                    temp.push({...arr[i]});
+                    i++;
+                } else {
+                    temp.push({...arr[j]});
+                    j++;
+                }
+            }
+            
+            while (i <= mid) {
+                temp.push({...arr[i]});
+                i++;
+            }
+            
+            while (j <= right) {
+                temp.push({...arr[j]});
+                j++;
+            }
+            
+            for (let k = 0; k < temp.length; k++) {
+                arr[left + k] = temp[k];
+                arr[left + k].state = 'swapping';
+            }
+        }
+
+        // QUICK SORT
+        function initQuickSort() {
+            const data = state.animationData;
+            data.stack = [{low: 0, high: data.array.length - 1}];
+            data.partitionPhase = null;
+        }
+
+        function stepQuickSort() {
+            const data = state.animationData;
+            
+            if (data.stack.length === 0 && !data.partitionPhase) {
+                data.sorted = true;
+                return;
+            }
+
+            // Reset colors
+            data.array.forEach(item => {
+                if (item.state !== 'pivot') item.state = 'unsorted';
+            });
+
+            if (!data.partitionPhase) {
+                const segment = data.stack.pop();
+                if (segment.low < segment.high) {
+                    data.partitionPhase = {
+                        low: segment.low,
+                        high: segment.high,
+                        pivot: segment.high,
+                        i: segment.low - 1,
+                        j: segment.low
+                    };
+                    data.array[data.partitionPhase.pivot].state = 'pivot';
+                }
+                return;
+            }
+
+            const p = data.partitionPhase;
+            
+            if (p.j < p.high) {
+                data.array[p.j].state = 'comparing';
+                
+                if (data.array[p.j].value < data.array[p.pivot].value) {
+                    p.i++;
+                    data.array[p.i].state = 'swapping';
+                    data.array[p.j].state = 'swapping';
+                    [data.array[p.i], data.array[p.j]] = [data.array[p.j], data.array[p.i]];
+                }
+                p.j++;
+            } else {
+                // Finalize partition
+                p.i++;
+                [data.array[p.i], data.array[p.pivot]] = [data.array[p.pivot], data.array[p.i]];
+                
+                data.stack.push({low: p.low, high: p.i - 1});
+                data.stack.push({low: p.i + 1, high: p.high});
+                data.partitionPhase = null;
+            }
+        }
+
+        // HEAP SORT
+        function initHeapSort() {
+            const data = state.animationData;
+            data.heapPhase = 'build';
+            data.heapIndex = Math.floor(data.array.length / 2) - 1;
+            data.sortIndex = data.array.length - 1;
+        }
+
+        function stepHeapSort() {
+            const data = state.animationData;
+            
+            if (data.heapPhase === 'build') {
+                if (data.heapIndex >= 0) {
+                    heapify(data.array.length, data.heapIndex);
+                    data.heapIndex--;
+                } else {
+                    data.heapPhase = 'sort';
+                }
+            } else if (data.heapPhase === 'sort') {
+                if (data.sortIndex > 0) {
+                    data.array[0].state = 'swapping';
+                    data.array[data.sortIndex].state = 'swapping';
+                    [data.array[0], data.array[data.sortIndex]] = [data.array[data.sortIndex], data.array[0]];
+                    data.array[data.sortIndex].state = 'sorted';
+                    data.sortIndex--;
+                    heapify(data.sortIndex + 1, 0);
+                } else {
+                    data.array[0].state = 'sorted';
+                    data.sorted = true;
+                }
+            }
+        }
+
+        function heapify(n, i) {
+            const data = state.animationData;
+            const arr = data.array;
+            let largest = i;
+            const left = 2 * i + 1;
+            const right = 2 * i + 2;
+
+            if (left < n) arr[left].state = 'comparing';
+            if (right < n) arr[right].state = 'comparing';
+
+            if (left < n && arr[left].value > arr[largest].value) {
+                largest = left;
+            }
+
+            if (right < n && arr[right].value > arr[largest].value) {
+                largest = right;
+            }
+
+            if (largest !== i) {
+                arr[i].state = 'swapping';
+                arr[largest].state = 'swapping';
+                [arr[i], arr[largest]] = [arr[largest], arr[i]];
+            }
+        }
+
+        // Generic placeholder for other sorting algorithms
+        function stepGenericSort() {
+            const data = state.animationData;
+            const arr = data.array;
+            
+            // Simple comparison-based placeholder
+            if (data.i >= arr.length - 1) {
+                data.sorted = true;
+                arr.forEach(item => item.state = 'sorted');
+                return;
+            }
+
+            if (data.j >= arr.length - data.i - 1) {
+                arr[arr.length - data.i - 1].state = 'sorted';
+                data.i++;
+                data.j = 0;
+                return;
+            }
+
+            arr[data.j].state = 'comparing';
+            arr[data.j + 1].state = 'comparing';
+
+            if (arr[data.j].value > arr[data.j + 1].value) {
+                arr[data.j].state = 'swapping';
+                arr[data.j + 1].state = 'swapping';
+                [arr[data.j], arr[data.j + 1]] = [arr[data.j + 1], arr[data.j]];
+            }
+
+            data.j++;
+        }
+
+        // PROJECT MANAGEMENT VISUALIZATION SYSTEM
+        function initPMAnimation() {
+            state.animationData = {
+                methodology: state.currentAlgo,
+                currentPhase: 0,
+                elements: [],
+                time: 0
+            };
+
+            switch(state.currentAlgo) {
+                case 'waterfall':
+                    initWaterfall();
+                    break;
+                case 'scrum':
+                    initScrum();
+                    break;
+                case 'kanban':
+                    initKanban();
+                    break;
+                case 'agile':
+                    initAgile();
+                    break;
+                case 'xp':
+                    initXP();
+                    break;
+                default:
+                    initGenericPM();
+            }
+        }
+
+        function drawPMVisualization() {
+            const data = state.animationData;
+            
+            switch(data.methodology) {
+                case 'waterfall':
+                    drawWaterfall();
+                    break;
+                case 'scrum':
+                    drawScrum();
+                    break;
+                case 'kanban':
+                    drawKanban();
+                    break;
+                case 'agile':
+                    drawAgile();
+                    break;
+                case 'xp':
+                    drawXP();
+                    break;
+                default:
+                    drawGenericPM();
+            }
+
+            data.time += state.speed;
+        }
+
+        // WATERFALL
+        function initWaterfall() {
+            const phases = ['Requirements', 'Design', 'Implementation', 'Testing', 'Deployment', 'Maintenance'];
+            state.animationData.elements = phases.map((name, i) => ({
+                name: name,
+                y: -100 - i * 120,
+                targetY: 80 + i * 80,
+                locked: false,
+                progress: 0
+            }));
+        }
+
+        function drawWaterfall() {
+            const data = state.animationData;
+            
+            push();
+            textFont('Orbitron');
+            textSize(16);
+            
+            data.elements.forEach((phase, i) => {
+                // Move phase down
+                if (!phase.locked) {
+                    phase.y += 2 * state.speed;
+                    if (phase.y >= phase.targetY) {
+                        phase.y = phase.targetY;
+                        phase.locked = true;
+                    }
+                }
+
+                // Progress bar
+                if (phase.locked && phase.progress < 100) {
+                    phase.progress += 0.5 * state.speed;
+                }
+
+                // Draw block
+                const x = width / 2 - 150;
+                const w = 300;
+                const h = 60;
+                
+                // Glow effect
+                drawingContext.shadowBlur = 20;
+                drawingContext.shadowColor = `rgba(0, 255, 255, ${phase.locked ? 0.8 : 0.3})`;
+                
+                fill(0, 50, 50, 200);
+                stroke(0, 255, 255);
+                strokeWeight(2);
+                rect(x, phase.y, w, h, 10);
+                
+                drawingContext.shadowBlur = 0;
+                
+                // Text
+                fill(255);
+                noStroke();
+                text(phase.name, width / 2, phase.y + 20);
+                
+                // Progress bar
+                if (phase.locked) {
+                    fill(57, 255, 20, 100);
+                    noStroke();
+                    rect(x + 10, phase.y + h - 15, (w - 20) * (phase.progress / 100), 8, 4);
+                }
+
+                // Arrow
+                if (i < data.elements.length - 1 && phase.locked) {
+                    stroke(255, 0, 255);
+                    strokeWeight(3);
+                    line(width / 2, phase.y + h, width / 2, phase.y + h + 20);
+                    // Arrow head
+                    line(width / 2, phase.y + h + 20, width / 2 - 5, phase.y + h + 15);
+                    line(width / 2, phase.y + h + 20, width / 2 + 5, phase.y + h + 15);
+                }
+            });
+            pop();
+        }
+
+        // SCRUM
+        function initScrum() {
+            state.animationData.elements = [];
+            state.animationData.sprint = 0;
+            state.animationData.sprintPhase = 'planning'; // planning, daily, review, retro
+            state.animationData.backlog = [];
+            
+            for (let i = 0; i < 10; i++) {
+                state.animationData.backlog.push({
+                    id: i,
+                    x: 50,
+                    y: 100 + i * 40,
+                    status: 'backlog'
+                });
+            }
+        }
+
+        function drawScrum() {
+            const data = state.animationData;
+            
+            push();
+            textFont('Orbitron');
+            
+            // Draw sprint cycle
+            const centerX = width / 2 + 200;
+            const centerY = height / 2;
+            const radius = 150;
+            
+            // Sprint circle
+            noFill();
+            stroke(255, 0, 255, 150);
+            strokeWeight(3);
+            ellipse(centerX, centerY, radius * 2);
+            
+            // Sprint phases
+            const phases = ['Sprint Planning', 'Daily Scrum', 'Sprint Review', 'Retrospective'];
+            const angle = (data.time * 0.02) % (TWO_PI);
+            
+            phases.forEach((phase, i) => {
+                const a = (TWO_PI / phases.length) * i;
+                const x = centerX + cos(a) * radius;
+                const y = centerY + sin(a) * radius;
+                
+                // Highlight current phase
+                if (abs(angle - a) < 0.5) {
+                    fill(57, 255, 20);
+                    drawingContext.shadowBlur = 20;
+                    drawingContext.shadowColor = 'rgba(57, 255, 20, 0.8)';
+                } else {
+                    fill(0, 255, 255);
+                    drawingContext.shadowBlur = 0;
+                }
+                
+                textSize(12);
+                textAlign(CENTER);
+                text(phase, x, y);
+            });
+            
+            // Moving indicator
+            const indX = centerX + cos(angle) * radius;
+            const indY = centerY + sin(angle) * radius;
+            fill(255, 0, 255);
+            noStroke();
+            ellipse(indX, indY, 15);
+            
+            // Product backlog
+            textAlign(LEFT);
+            textSize(14);
+            fill(0, 255, 255);
+            drawingContext.shadowBlur = 10;
+            drawingContext.shadowColor = 'rgba(0, 255, 255, 0.6)';
+            text('Product Backlog', 50, 60);
+            
+            drawingContext.shadowBlur = 0;
+            data.backlog.forEach((item, i) => {
+                if (i < 5) {
+                    fill(0, 100, 100, 200);
+                    stroke(0, 255, 255);
+                    rect(50, 80 + i * 35, 150, 30, 5);
+                    
+                    fill(255);
+                    noStroke();
+                    textSize(10);
+                    text(`Task ${item.id}`, 60, 95 + i * 35);
+                }
+            });
+            
+            // Sprint info
+            textSize(18);
+            fill(255, 0, 255);
+            textAlign(CENTER);
+            text(`Sprint ${Math.floor(data.time / 500) + 1}`, centerX, centerY - radius - 30);
+            
+            pop();
+        }
+
+        // KANBAN
+        function initKanban() {
+            state.animationData.columns = [
+                { name: 'To Do', x: 100, tasks: [] },
+                { name: 'In Progress', x: 450, tasks: [] },
+                { name: 'Done', x: 800, tasks: [] }
+            ];
+            
+            // Initialize tasks
+            for (let i = 0; i < 8; i++) {
+                state.animationData.columns[0].tasks.push({
+                    id: i,
+                    y: 100 + i * 60,
+                    moving: false,
+                    targetCol: 0
+                });
+            }
+        }
+
+        function drawKanban() {
+            const data = state.animationData;
+            
+            push();
+            textFont('Orbitron');
+            
+            // Draw columns
+            data.columns.forEach((col, colIndex) => {
+                // Column background
+                fill(0, 50, 50, 50);
+                stroke(0, 255, 255);
+                strokeWeight(2);
+                rect(col.x, 50, 300, height - 100, 10);
+                
+                // Column header
+                fill(0, 255, 255);
+                drawingContext.shadowBlur = 15;
+                drawingContext.shadowColor = 'rgba(0, 255, 255, 0.6)';
+                textSize(18);
+                textAlign(CENTER);
+                text(col.name, col.x + 150, 80);
+                drawingContext.shadowBlur = 0;
+                
+                // WIP limit indicator
+                if (colIndex === 1) {
+                    textSize(12);
+                    fill(255, 0, 255);
+                    text(`WIP: ${col.tasks.length}/3`, col.x + 150, 105);
+                }
+            });
+            
+            // Move tasks
+            if (data.time % 120 === 0) {
+                // Move task from To Do to In Progress
+                if (data.columns[0].tasks.length > 0 && data.columns[1].tasks.length < 3) {
+                    const task = data.columns[0].tasks.shift();
+                    task.moving = true;
+                    task.targetCol = 1;
+                    data.columns[1].tasks.push(task);
+                }
+                // Move from In Progress to Done
+                if (data.columns[1].tasks.length > 0 && Math.random() > 0.5) {
+                    const task = data.columns[1].tasks.shift();
+                    task.moving = true;
+                    task.targetCol = 2;
+                    data.columns[2].tasks.push(task);
+                }
+            }
+            
+            // Draw tasks
+            data.columns.forEach((col, colIndex) => {
+                col.tasks.forEach((task, taskIndex) => {
+                    const targetX = col.x + 20;
+                    const currentX = task.x || targetX;
+                    
+                    if (task.moving) {
+                        task.x = lerp(currentX, targetX, 0.1);
+                        if (abs(task.x - targetX) < 1) task.moving = false;
+                    } else {
+                        task.x = targetX;
+                    }
+                    
+                    const y = 130 + taskIndex * 60;
+                    
+                    // Task card
+                    fill(colIndex === 2 ? color(0, 100, 0, 200) : color(50, 0, 50, 200));
+                    stroke(colIndex === 2 ? color(57, 255, 20) : color(255, 0, 255));
+                    strokeWeight(2);
+                    rect(task.x, y, 260, 50, 8);
+                    
+                    // Task text
+                    fill(255);
+                    noStroke();
+                    textSize(14);
+                    textAlign(LEFT);
+                    text(`Task ${task.id}`, task.x + 15, y + 25);
+                });
+            });
+            
+            pop();
+        }
+
+        // AGILE
+        function initAgile() {
+            state.animationData.elements = [];
+            state.animationData.iteration = 0;
+            
+            for (let i = 0; i < 3; i++) {
+                state.animationData.elements.push({
+                    angle: (TWO_PI / 3) * i,
+                    radius: 150,
+                    label: ['Plan', 'Build', 'Review'][i],
+                    active: i === 0
+                });
+            }
+        }
+
+        function drawAgile() {
+            const data = state.animationData;
+            
+            push();
+            textFont('Orbitron');
+            
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Central hub
+            fill(50, 0, 50, 200);
+            stroke(255, 0, 255);
+            strokeWeight(3);
+            ellipse(centerX, centerY, 100);
+            
+            fill(255);
+            noStroke();
+            textSize(16);
+            textAlign(CENTER);
+            text('AGILE\nITERATION', centerX, centerY);
+            
+            // Rotating elements
+            const rotation = (data.time * 0.01) % TWO_PI;
+            
+            data.elements.forEach((elem, i) => {
+                const angle = elem.angle + rotation;
+                const x = centerX + cos(angle) * elem.radius;
+                const y = centerY + sin(angle) * elem.radius;
+                
+                // Orbit trail
+                noFill();
+                stroke(0, 255, 255, 50);
+                strokeWeight(2);
+                ellipse(centerX, centerY, elem.radius * 2);
+                
+                // Element
+                const isActive = (rotation + elem.angle) % TWO_PI < TWO_PI / 3;
+                
+                if (isActive) {
+                    fill(57, 255, 20);
+                    drawingContext.shadowBlur = 25;
+                    drawingContext.shadowColor = 'rgba(57, 255, 20, 0.8)';
+                } else {
+                    fill(0, 255, 255);
+                    drawingContext.shadowBlur = 10;
+                    drawingContext.shadowColor = 'rgba(0, 255, 255, 0.5)';
+                }
+                
+                noStroke();
+                ellipse(x, y, 60);
+                
+                fill(0);
+                textSize(12);
+                text(elem.label, x, y);
+                
+                drawingContext.shadowBlur = 0;
+            });
+            
+            // Iteration counter
+            fill(255, 0, 255);
+            textSize(14);
+            text(`Iteration: ${Math.floor(data.time / 200) + 1}`, centerX, 80);
+            
+            pop();
+        }
+
+        // EXTREME PROGRAMMING (XP)
+        function initXP() {
+            state.animationData.practices = [
+                'Pair Programming', 'TDD', 'Continuous Integration',
+                'Refactoring', 'Simple Design', 'Collective Ownership'
+            ];
+            state.animationData.particles = [];
+            
+            for (let i = 0; i < state.animationData.practices.length; i++) {
+                state.animationData.particles.push({
+                    x: random(100, width - 100),
+                    y: random(100, height - 100),
+                    vx: random(-2, 2),
+                    vy: random(-2, 2),
+                    label: state.animationData.practices[i]
+                });
+            }
+        }
+
+        function drawXP() {
+            const data = state.animationData;
+            
+            push();
+            textFont('Orbitron');
+            
+            // Update and draw particles
+            data.particles.forEach((p, i) => {
+                p.x += p.vx * state.speed;
+                p.y += p.vy * state.speed;
+                
+                // Bounce off walls
+                if (p.x < 100 || p.x > width - 100) p.vx *= -1;
+                if (p.y < 100 || p.y > height - 100) p.vy *= -1;
+                
+                // Draw practice bubble
+                fill(50, 0, 100, 200);
+                stroke(191, 0, 255);
+                strokeWeight(2);
+                ellipse(p.x, p.y, 120, 80);
+                
+                fill(255);
+                noStroke();
+                textSize(10);
+                textAlign(CENTER);
+                text(p.label, p.x, p.y);
+                
+                // Draw connections
+                data.particles.forEach((p2, j) => {
+                    if (i < j) {
+                        const d = dist(p.x, p.y, p2.x, p2.y);
+                        if (d < 200) {
+                            stroke(0, 255, 255, map(d, 0, 200, 100, 0));
+                            strokeWeight(1);
+                            line(p.x, p.y, p2.x, p2.y);
+                        }
+                    }
+                });
+            });
+            
+            // Title
+            fill(191, 0, 255);
+            textSize(20);
+            textAlign(CENTER);
+            drawingContext.shadowBlur = 15;
+            drawingContext.shadowColor = 'rgba(191, 0, 255, 0.8)';
+            text('XP Practices in Harmony', width / 2, 50);
+            drawingContext.shadowBlur = 0;
+            
+            pop();
+        }
+
+        // Generic PM placeholder
+        function initGenericPM() {
+            state.animationData.elements = [];
+            const methodologyName = pmMethodologies[state.currentAlgo].name;
+            
+            state.animationData.elements = [
+                { x: width * 0.2, y: height * 0.3, label: 'Phase 1', progress: 0 },
+                { x: width * 0.5, y: height * 0.3, label: 'Phase 2', progress: 0 },
+                { x: width * 0.8, y: height * 0.3, label: 'Phase 3', progress: 0 },
+                { x: width * 0.35, y: height * 0.7, label: 'Phase 4', progress: 0 },
+                { x: width * 0.65, y: height * 0.7, label: 'Phase 5', progress: 0 }
+            ];
+        }
+
+        function drawGenericPM() {
+            const data = state.animationData;
+            
+            push();
+            textFont('Orbitron');
+            
+            // Title
+            fill(255, 0, 255);
+            textSize(24);
+            textAlign(CENTER);
+            drawingContext.shadowBlur = 20;
+            drawingContext.shadowColor = 'rgba(255, 0, 255, 0.8)';
+            text(pmMethodologies[data.methodology].name, width / 2, 60);
+            drawingContext.shadowBlur = 0;
+            
+            // Draw process nodes
+            data.elements.forEach((elem, i) => {
+                elem.progress = min(elem.progress + 0.3 * state.speed, 100);
+                
+                // Node
+                fill(0, 50, 50, 200);
+                stroke(0, 255, 255);
+                strokeWeight(3);
+                ellipse(elem.x, elem.y, 100);
+                
+                // Progress arc
+                noFill();
+                stroke(57, 255, 20);
+                strokeWeight(5);
+                arc(elem.x, elem.y, 110, 110, -HALF_PI, -HALF_PI + (TWO_PI * elem.progress / 100));
+                
+                // Label
+                fill(255);
+                noStroke();
+                textSize(12);
+                textAlign(CENTER);
+                text(elem.label, elem.x, elem.y);
+                
+                // Connect to next
+                if (i < data.elements.length - 1) {
+                    stroke(255, 0, 255, 100);
+                    strokeWeight(2);
+                    line(elem.x, elem.y, data.elements[i + 1].x, data.elements[i + 1].y);
+                }
+            });
+            
+            pop();
+        }
+
+        // Reset function
+        window.resetAnimation = function() {
+            if (state.animationData) {
+                state.animationData = null;
+            }
+        };
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
