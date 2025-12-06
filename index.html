@@ -234,6 +234,10 @@
                 <input type="range" id="speedSlider" min="1" max="10" value="1" oninput="updateSpeed()">
             </div>
             <div class="control-group">
+                <label>SOUND: <span class="speed-value" id="soundStatus">ON</span></label>
+                <button onclick="toggleSound()" id="soundBtn">🔊 MUTE</button>
+            </div>
+            <div class="control-group">
                 <button onclick="launch()">🚀 LAUNCH</button>
             </div>
             <div class="control-group">
@@ -263,7 +267,8 @@
             isRunning: false,
             isPaused: false,
             speed: 1,
-            animationData: null
+            animationData: null,
+            soundEnabled: true
         };
 
         // Sound system
@@ -285,7 +290,7 @@
         }
 
         function playCompareSound(value1, value2) {
-            if (!sounds.initialized) return;
+            if (!state.soundEnabled || !sounds.initialized) return;
 
             try {
                 const osc = new p5.Oscillator('sine');
@@ -300,7 +305,7 @@
         }
 
         function playSwapSound(value) {
-            if (!sounds.initialized) return;
+            if (!state.soundEnabled || !sounds.initialized) return;
 
             try {
                 const osc = new p5.Oscillator('square');
@@ -315,7 +320,7 @@
         }
 
         function playSortedSound() {
-            if (!sounds.initialized) return;
+            if (!state.soundEnabled || !sounds.initialized) return;
 
             try {
                 const osc = new p5.Oscillator('triangle');
@@ -329,7 +334,7 @@
         }
 
         function playPhaseSound() {
-            if (!sounds.initialized) return;
+            if (!state.soundEnabled || !sounds.initialized) return;
 
             try {
                 const osc = new p5.Oscillator('sawtooth');
@@ -343,7 +348,7 @@
         }
 
         function playLaunchSound() {
-            if (!sounds.initialized) return;
+            if (!state.soundEnabled || !sounds.initialized) return;
 
             try {
                 const osc = new p5.Oscillator('sawtooth');
@@ -366,7 +371,7 @@
         }
 
         function playCompleteSound() {
-            if (!sounds.initialized) return;
+            if (!state.soundEnabled || !sounds.initialized) return;
 
             try {
                 const notes = [523.25, 659.25, 783.99]; // C, E, G
@@ -826,8 +831,8 @@
             let i = left, j = mid + 1;
 
             while (i <= mid && j <= right) {
-                arr[i].state = 'comparing';
-                arr[j].state = 'comparing';
+                if (!arr[i].correctPosition) arr[i].state = 'comparing';
+                if (!arr[j].correctPosition) arr[j].state = 'comparing';
                 playCompareSound(arr[i].value, arr[j].value);
 
                 if (arr[i].value <= arr[j].value) {
@@ -851,7 +856,9 @@
 
             for (let k = 0; k < temp.length; k++) {
                 arr[left + k] = temp[k];
-                arr[left + k].state = 'swapping';
+                if (!arr[left + k].correctPosition) {
+                    arr[left + k].state = 'swapping';
+                }
                 if (k === 0) playSwapSound(temp[k].value);
             }
         }
@@ -871,9 +878,11 @@
                 return;
             }
 
-            // Reset colors
+            // Reset colors (but keep correct positions marked)
             data.array.forEach(item => {
-                if (item.state !== 'pivot') item.state = 'unsorted';
+                if (!item.correctPosition && item.state !== 'pivot') {
+                    item.state = 'unsorted';
+                }
             });
 
             if (!data.partitionPhase) {
@@ -886,7 +895,9 @@
                         i: segment.low - 1,
                         j: segment.low
                     };
-                    data.array[data.partitionPhase.pivot].state = 'pivot';
+                    if (!data.array[data.partitionPhase.pivot].correctPosition) {
+                        data.array[data.partitionPhase.pivot].state = 'pivot';
+                    }
                 }
                 return;
             }
@@ -894,13 +905,15 @@
             const p = data.partitionPhase;
 
             if (p.j < p.high) {
-                data.array[p.j].state = 'comparing';
+                if (!data.array[p.j].correctPosition) {
+                    data.array[p.j].state = 'comparing';
+                }
                 playCompareSound(data.array[p.j].value, data.array[p.pivot].value);
 
                 if (data.array[p.j].value < data.array[p.pivot].value) {
                     p.i++;
-                    data.array[p.i].state = 'swapping';
-                    data.array[p.j].state = 'swapping';
+                    if (!data.array[p.i].correctPosition) data.array[p.i].state = 'swapping';
+                    if (!data.array[p.j].correctPosition) data.array[p.j].state = 'swapping';
                     playSwapSound(data.array[p.i].value);
                     [data.array[p.i], data.array[p.j]] = [data.array[p.j], data.array[p.i]];
                 }
@@ -937,16 +950,18 @@
                 }
             } else if (data.heapPhase === 'sort') {
                 if (data.sortIndex > 0) {
-                    data.array[0].state = 'swapping';
-                    data.array[data.sortIndex].state = 'swapping';
+                    if (!data.array[0].correctPosition) data.array[0].state = 'swapping';
+                    if (!data.array[data.sortIndex].correctPosition) data.array[data.sortIndex].state = 'swapping';
                     playSwapSound(data.array[0].value);
                     [data.array[0], data.array[data.sortIndex]] = [data.array[data.sortIndex], data.array[0]];
-                    data.array[data.sortIndex].state = 'sorted';
+                    if (!data.array[data.sortIndex].correctPosition) {
+                        data.array[data.sortIndex].state = 'sorted';
+                    }
                     playSortedSound();
                     data.sortIndex--;
                     heapify(data.sortIndex + 1, 0);
                 } else {
-                    data.array[0].state = 'sorted';
+                    if (!data.array[0].correctPosition) data.array[0].state = 'sorted';
                     data.sorted = true;
                     playCompleteSound();
                 }
@@ -960,8 +975,8 @@
             const left = 2 * i + 1;
             const right = 2 * i + 2;
 
-            if (left < n) arr[left].state = 'comparing';
-            if (right < n) arr[right].state = 'comparing';
+            if (left < n && !arr[left].correctPosition) arr[left].state = 'comparing';
+            if (right < n && !arr[right].correctPosition) arr[right].state = 'comparing';
 
             if (left < n && arr[left].value > arr[largest].value) {
                 largest = left;
@@ -972,8 +987,8 @@
             }
 
             if (largest !== i) {
-                arr[i].state = 'swapping';
-                arr[largest].state = 'swapping';
+                if (!arr[i].correctPosition) arr[i].state = 'swapping';
+                if (!arr[largest].correctPosition) arr[largest].state = 'swapping';
                 playSwapSound(arr[i].value);
                 [arr[i], arr[largest]] = [arr[largest], arr[i]];
             }
